@@ -14,7 +14,8 @@ def get_dominant_color(image):
     # frequencies. We're not interpolating so should be quick.
     image.thumbnail((200, 200))
     max_score = None
-    dominant_color = None
+    dominant_color1 = None
+    dominant_color2 = None
 
     for count, (r, g, b, a) in image.getcolors(image.size[0] * image.size[1]):
         # Skip 100% transparent pixels
@@ -37,8 +38,10 @@ def get_dominant_color(image):
         score = (saturation + 0.1) * count
         if score > max_score:
             max_score = score
-            dominant_color = (b, g, r)
-    return dominant_color
+            dominant_color2 = dominant_color1
+            dominant_color1 = (b, g, r)
+
+    return dominant_color1, dominant_color2
 
 
 if __name__ == '__main__':
@@ -67,16 +70,35 @@ if __name__ == '__main__':
     pil_img = Image.fromarray(cv2.cvtColor(cropped_img, cv2.COLOR_BGR2RGB))
 
     # detect the dominant color
-    dominant_color = get_dominant_color(pil_img)
+    dominant_color1, dominant_color2 = get_dominant_color(pil_img)
 
-    print dominant_color
+    # calculate average color
+    average_color = [cropped_img[:, :, i].mean() for i in range(cropped_img.shape[-1])]
+
+    print "dominant color"
+    print dominant_color1
+    print dominant_color2
+
+    print
+    print "average color"
+    print average_color
+
 
     # display doninant color
     size = 100, 100, 3
-    color_display = np.zeros(size, dtype=np.uint8)
-    color_display[:] = dominant_color
+    dominant_color_display1 = np.zeros(size, dtype=np.uint8)
+    dominant_color_display1[:] = dominant_color1
+
+    dominant_color_display2 = np.zeros(size, dtype=np.uint8)
+    dominant_color_display2[:] = dominant_color2
+
+    # display average color
+    average_color_display = np.zeros(size, dtype=np.uint8)
+    average_color_display[:] = average_color
 
     cv2.imshow("original image", cv_img)
     cv2.imshow("cropped image", cropped_img)
-    cv2.imshow("dominant color", color_display)
+    cv2.imshow("color1", dominant_color_display1)
+    cv2.imshow("color2", dominant_color_display2)
+    cv2.imshow("average", average_color_display)
     cv2.waitKey(0)
